@@ -1,0 +1,215 @@
+<html>
+<head>
+    <style>
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #map {
+        height: 90%;
+      }
+      /* Optional: Makes the sample page fill the window. */
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+	  }
+	  #floating-panel {
+        position: absolute;
+        top: 10px;
+        left: 25%;
+        z-index: 5;
+        background-color: #fff;
+        padding: 5px;
+        border: 1px solid #999;
+        text-align: center;
+        font-family: 'Roboto','sans-serif';
+        line-height: 30px;
+        padding-left: 10px;
+      }
+    </style>
+</head>
+<body>
+	<div id="floating-panel">
+      <input type="text" id="inputSite" name="input_site"/>    
+      <input onclick="searchSite();" type=button value="Show this site">
+	  <input onclick="showSites();" type=button value="Show All sites">
+    </div>
+	<div id="map"></div>
+
+	<script>
+	var customLabel = {
+        MACRO: {
+          label: 'M'
+        },
+        IBC: {
+          label: 'I'
+        }
+	};
+	
+	function initMap() {
+		var bangkok = {lat: 13.7584, lng: 100.565};
+        var map = new google.maps.Map(document.getElementById('map'), {
+          center: bangkok,
+          zoom: 12
+        });	
+	}
+		
+	function searchSite() {
+	
+		var map = new google.maps.Map(document.getElementById('map'), {
+			zoom: 15
+		});
+		
+        var input = document.getElementById('inputSite');
+		var input_site=String(input.value);
+		
+
+		
+		downloadUrl('siteinfo_xml.php', function(data) {
+            var xml = data.responseXML;			
+            var sites = xml.documentElement.getElementsByTagName('site');
+			var infoWindow = new google.maps.InfoWindow;
+			
+			Array.prototype.forEach.call(sites, function(siteElem) {
+              var name = siteElem.getAttribute('site_name');
+			  var region = siteElem.getAttribute('region');
+              var type = siteElem.getAttribute('site_type');
+			  var point = new google.maps.LatLng(
+                  parseFloat(siteElem.getAttribute('latitude')),
+                  parseFloat(siteElem.getAttribute('longitude')));
+			  
+			  var infowincontent = document.createElement('div');
+			  var strong = document.createElement('strong');			  
+			  strong.textContent = name;
+			  infowincontent.appendChild(strong);
+			  infowincontent.appendChild(document.createElement('br'));			  
+			  var text = document.createElement('text');
+			  text.textContent = region + '|' + type;
+			  infowincontent.appendChild(text);
+				  
+			  if (name==input_site){	
+					var newcenter=point;
+					map.setCenter(newcenter);
+					var site = new google.maps.Marker({
+					map: map,
+					animation: google.maps.Animation.DROP,
+					position: point				
+					});	
+					
+					infoWindow.setContent(infowincontent);
+					infoWindow.open(map,site);
+
+			    }				
+			});
+		});
+	}	
+	
+	function setmapOnAll(map){
+				
+		var infoWindow = new google.maps.InfoWindow;
+		var input = document.getElementById('inputSite');
+		var input_site=String(input.value);
+		
+
+		
+		downloadUrl('siteinfo_xml.php', function(data) {
+            var xml = data.responseXML;			
+            var sites = xml.documentElement.getElementsByTagName('site');
+			 
+			Array.prototype.forEach.call(sites, function(siteElem) {
+              var name = siteElem.getAttribute('site_name');
+			  var region = siteElem.getAttribute('region');
+              var type = siteElem.getAttribute('site_type');
+              var point = new google.maps.LatLng(
+                  parseFloat(siteElem.getAttribute('latitude')),
+                  parseFloat(siteElem.getAttribute('longitude')));
+				  
+			  var infowincontent = document.createElement('div');
+			  var strong = document.createElement('strong');
+			  
+			  strong.textContent = name;
+			  infowincontent.appendChild(strong);
+			  infowincontent.appendChild(document.createElement('br'));
+			  
+			  var text = document.createElement('text');
+			  text.textContent = region + '|' + type;
+			  infowincontent.appendChild(text);
+			  
+	          
+			  var icon = customLabel[type] || {};				  
+
+              var site = new google.maps.Marker({
+                position: point,
+				label: icon.label				
+				});	
+			  site.setMap(map);
+				
+			  var cityCircle = new google.maps.Circle({
+					strokeColor: '#DA70D6',
+					strokeOpacity: 0.35,
+					strokeWeight: 1,
+					fillColor: '#DA70D6',
+					fillOpacity: 0.35,
+					map: map,
+					center: point,
+					radius: 100
+			    });
+				
+			  if(name==input_site){
+					var newcenter=point;
+					map.setCenter(newcenter);
+					infoWindow.setContent(infowincontent);
+					infoWindow.open(map,site);				
+				}
+			
+				site.addListener('click', function() {
+                infoWindow.setContent(infowincontent);
+                infoWindow.open(map,site);
+				
+
+				  
+              });	
+			});				
+		});
+	}
+
+	
+	function showSites() {		       
+		var bangkok = {lat: 13.7584, lng: 100.565};
+        var map = new google.maps.Map(document.getElementById('map'), {
+          center: bangkok,
+          zoom: 12
+        });	
+		
+		setmapOnAll(map);		
+    }
+    
+	 
+	  
+	function downloadUrl(url, callback) {
+        var request = window.ActiveXObject ?
+            new ActiveXObject('Microsoft.XMLHTTP') :
+            new XMLHttpRequest;
+
+        request.onreadystatechange = function() {
+          if (request.readyState == 4) {
+            request.onreadystatechange = doNothing;
+            callback(request, request.status);
+          }
+        };
+
+        request.open('GET', url, true);
+        request.send(null);
+	}
+
+	function doNothing() {}
+
+</script>
+<script async defer
+    src="https://maps.googleapis.com/maps/api/js?v=3&key=AIzaSyDLKTu87GAjCv1SROk5KsLfNZo_0uKgB6c&callback=initMap">
+</script>
+
+
+</body>
+</html>

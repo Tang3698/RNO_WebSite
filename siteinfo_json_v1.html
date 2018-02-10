@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <style type="text/css">
+      html { height: 100% }
+      body { height: 100%; margin: 0; padding: 0 }
+      #map { height: 100% }
+    </style>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>    
+  </head>
+  <body>
+  <div id="map" style="width:100%; height:100%"></div>
+    <script type="text/javascript">
+	
+		
+	function initMap(){
+		
+			var map;     
+			var bangkok = {lat: 13.7584, lng: 100.565};
+			var mapOptions = {
+				center: bangkok,
+				zoom: 12,
+				}
+			map = new google.maps.Map(document.getElementById("map"),
+            mapOptions);
+		
+		//用jquery提取JSON数据
+		$(document).ready(function() {	
+
+			//设置路径
+			$.getJSON("siteinfo_json.php", function(json1) {
+			$.each(json1, function(key, data) {
+				var Lat=parseFloat(data.latitude);
+				var Long=parseFloat(data.longitude);
+				var point={lat:Lat,lng:Long};
+				var name=data.site_name;
+				// Creating a marker and putting it on the map
+				var marker = new google.maps.Marker({
+					position: point,
+					title: name
+				});	
+	            marker.setMap(map);
+          });
+        });
+      })
+	}
+    </script>
+	
+	<script type="text/javascript"
+      src="http://maps.googleapis.com/maps/api/js?key=AIzaSyDLKTu87GAjCv1SROk5KsLfNZo_0uKgB6c&callback=initMap">
+    </script>
+  </body>
+</html>
